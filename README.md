@@ -1,7 +1,8 @@
 # Group-Free 3D Object Detection via Transformers
 
-By [Ze Liu](https://github.com/zeliu98), [Zheng Zhang](https://github.com/stupidZZ)
-, [Yue Cao](https://github.com/caoyue10), [Han Hu](https://github.com/ancientmooner), [Xin Tong](http://www.xtong.info/)
+By [Ze Liu](https://github.com/zeliu98), [Zheng Zhang](https://github.com/stupidZZ), [Yue Cao](https://github.com/caoyue10), [Han Hu](https://github.com/ancientmooner), [Xin Tong](http://www.xtong.info/).
+
+This repo is the official implementation of ["Group-Free 3D Object Detection via Transformers"](https://arxiv.org/abs/2104.).
 
 ![teaser](doc/teaser.png)
 
@@ -10,9 +11,6 @@ By [Ze Liu](https://github.com/zeliu98), [Zheng Zhang](https://github.com/stupid
 - April 01, 2021: initial release.
 
 ## Introduction
-
-This repo is the official implementation
-of ["Group-Free 3D Object Detection via Transformers"](https://arxiv.org/abs/2104.).
 
 Recently, directly detecting 3D objects from 3D point clouds has received increasing attention. To extract object
 representation from an irregular point cloud, existing methods usually take a point grouping step to assign the points
@@ -42,7 +40,7 @@ scripts on ScanNet and SUN RGB-D.
 
 ## Main Results
 
-### Scannet V2
+### ScanNet V2
 
 |Method | backbone | mAP@0.25 | mAP@0.5 | Model |
 |:---:|:---:|:---:|:---:|:---:|
@@ -58,7 +56,7 @@ scripts on ScanNet and SUN RGB-D.
 | Ours(L12, O256) | PointNet++w2× |68.8 (68.3*) | 52.1 (51.1*) |[model](https://drive.google.com/file/d/1V6sFLFcqsp7YJ3-9AV2NqUhEGVkuNGWT/view?usp=sharing)|
 | Ours(L12, O512) | PointNet++w2× | 69.1 (68.8*) |52.8 (52.3*) |[model](https://drive.google.com/file/d/16NAEZqxPdBkxW7GGKGHe4-nDtfqL1htE/view?usp=sharing)|
 
-### SUNRGBD
+### SUN RGB-D
 
 |Method | backbone | inputs | mAP@0.25 | mAP@0.5 | Model |
 |:---:|:---:|:---:|:---:|:---:|:---:|
@@ -96,7 +94,7 @@ For ScanNet, follow the [README](./scannet/README.md) under the `scannet` folder
 
 ## Usage
 
-### Scannet
+### ScanNet
 
 For `L6, O256` training:
 
@@ -170,7 +168,7 @@ python eval_avg.py --num_point 50000 --width 2 --num_decoder_layers 12 --num_tar
     --dataset scannet --data_root <data directory> [--dump_dir <dump directory>]
 ```
 
-#### SUNRGBD
+#### SUN RGB-D
 
 For `L6, O256` training:
 
