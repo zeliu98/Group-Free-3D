@@ -2,7 +2,7 @@
 
 By [Ze Liu](https://github.com/zeliu98), [Zheng Zhang](https://github.com/stupidZZ), [Yue Cao](https://github.com/caoyue10), [Han Hu](https://github.com/ancientmooner), [Xin Tong](http://www.xtong.info/).
 
-This repo is the official implementation of ["Group-Free 3D Object Detection via Transformers"](https://arxiv.org/abs/2104.).
+This repo is the official implementation of ["Group-Free 3D Object Detection via Transformers"](https://arxiv.org/abs/2104.00678).
 
 ![teaser](doc/teaser.png)
 
@@ -33,7 +33,7 @@ scripts on ScanNet and SUN RGB-D.
 @article{liu2021,
   title={Group-Free 3D Object Detection via Transformers},
   author={Liu, Ze and Zhang, Zheng and Cao, Yue and Hu, Han and Tong, Xin},
-  journal={arXiv preprint arXiv:2104.},
+  journal={arXiv preprint arXiv:2104.00678},
   year={2021}
 }
 ```
