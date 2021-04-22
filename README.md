@@ -65,7 +65,7 @@ scripts on ScanNet and SUN RGB-D.
 |[HGNet](https://openaccess.thecvf.com/content_CVPR_2020/papers/Chen_A_Hierarchical_Graph_Network_for_3D_Object_Detection_on_Point_CVPR_2020_paper.pdf)| GU-net |point | 61.6 |-|-|
 |[H3DNet](https://arxiv.org/abs/2006.05682) | 4xPointNet++ |point | 60.1 | 39.0 | [official repo](https://github.com/zaiweizhang/H3DNet) |
 |[imVoteNet](https://arxiv.org/abs/2001.10692)|PointNet++|point+RGB| 63.4 | - |  [official repo](https://github.com/facebookresearch/imvotenet)|
-| Ours(L6, O256)| PointNet++ | point | 62.8 (62.6*) | 42.3 (42.0*) |[model](https://drive.google.com/file/d/1uVQS3jtPQ6osZXPpydEcsoTt51TPqhMs/view?usp=sharing) |
+| Ours(L6, O256)| PointNet++ | point | 63.0 (62.6*) | 45.2 (44.4*) |[model](https://drive.google.com/file/d/16p4Ir2o16qfn5W1YPayxfDKrU_N_Hm9H/view?usp=sharing) |
 
 **Notes:**
 
@@ -175,7 +175,7 @@ For `L6, O256` training:
 ```bash
 python -m torch.distributed.launch --master_port <port_num> --nproc_per_node <num_of_gpus_to_use> \
     train_dist.py --max_epoch 600 --lr_decay_epochs 420 480 540 --num_point 20000 --num_decoder_layers 6 \
-    --size_delta 0.0625 --heading_delta 0.04 --center_delta 0.1111111111111 \
+    --size_cls_agnostic --size_delta 0.0625 --heading_delta 0.04 --center_delta 0.1111111111111 \
     --learning_rate 0.004 --decoder_learning_rate 0.0002 --weight_decay 0.00000001 --query_points_generator_loss_coef 0.2 --obj_loss_coef 0.4 \
     --dataset sunrgbd --data_root <data directory> [--log_dir <log directory>]
 ```
@@ -183,7 +183,7 @@ python -m torch.distributed.launch --master_port <port_num> --nproc_per_node <nu
 For `L6, O256` evaluation:
 
 ```bash
-python eval_avg.py --num_point 20000 --num_decoder_layers 6 \
+python eval_avg.py --num_point 20000 --num_decoder_layers 6 --size_cls_agnostic \
     --checkpoint_path <checkpoint> --avg_times 5 \
     --dataset sunrgbd --data_root <data directory> [--dump_dir <dump directory>]
 ```

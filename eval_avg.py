@@ -60,6 +60,7 @@ def parse_option():
     parser.add_argument('--heading_loss_type', default='smoothl1', type=str, help='(smoothl1, l1)')
     parser.add_argument('--heading_delta', default=1.0, type=float, help='delta for smoothl1 loss in heading loss')
     parser.add_argument('--query_points_obj_topk', default=4, type=int, help='query_points_obj_topk')
+    parser.add_argument('--size_cls_agnostic', action='store_true', help='Use class-agnostic size prediction.')
 
     # Data
     parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 8]')
@@ -135,7 +136,8 @@ def get_model(args, DATASET_CONFIG):
                               num_decoder_layers=args.num_decoder_layers,
                               dim_feedforward=args.dim_feedforward,
                               self_position_embedding=args.self_position_embedding,
-                              cross_position_embedding=args.cross_position_embedding)
+                              cross_position_embedding=args.cross_position_embedding,
+                              size_cls_agnostic=True if args.size_cls_agnostic else False)
 
     criterion = get_loss
     return model, criterion
@@ -220,7 +222,7 @@ def evaluate_one_time(test_loader, DATASET_CONFIG, CONFIG_DICT, AP_IOU_THRESHOLD
                                      size_delta=args.size_delta,
                                      heading_loss_type=args.heading_loss_type,
                                      heading_delta=args.heading_delta,
-                                     )
+                                     size_cls_agnostic=args.size_cls_agnostic)
 
         # Accumulate statistics and print out
         for key in end_points:
@@ -239,10 +241,14 @@ def evaluate_one_time(test_loader, DATASET_CONFIG, CONFIG_DICT, AP_IOU_THRESHOLD
                                                                    for ppx in last_three_prefixes], 1)
                 end_points[f'{prefix}heading_residuals'] = torch.cat([end_points[f'{ppx}heading_residuals']
                                                                       for ppx in last_three_prefixes], 1)
-                end_points[f'{prefix}size_scores'] = torch.cat([end_points[f'{ppx}size_scores']
-                                                                for ppx in last_three_prefixes], 1)
-                end_points[f'{prefix}size_residuals'] = torch.cat([end_points[f'{ppx}size_residuals']
-                                                                   for ppx in last_three_prefixes], 1)
+                if args.size_cls_agnostic:
+                    end_points[f'{prefix}pred_size'] = torch.cat([end_points[f'{ppx}pred_size']
+                                                                  for ppx in last_three_prefixes], 1)
+                else:
+                    end_points[f'{prefix}size_scores'] = torch.cat([end_points[f'{ppx}size_scores']
+                                                                    for ppx in last_three_prefixes], 1)
+                    end_points[f'{prefix}size_residuals'] = torch.cat([end_points[f'{ppx}size_residuals']
+                                                                       for ppx in last_three_prefixes], 1)
                 end_points[f'{prefix}sem_cls_scores'] = torch.cat([end_points[f'{ppx}sem_cls_scores']
                                                                    for ppx in last_three_prefixes], 1)
                 end_points[f'{prefix}objectness_scores'] = torch.cat([end_points[f'{ppx}objectness_scores']
@@ -255,17 +261,23 @@ def evaluate_one_time(test_loader, DATASET_CONFIG, CONFIG_DICT, AP_IOU_THRESHOLD
                                                                    for ppx in _prefixes], 1)
                 end_points[f'{prefix}heading_residuals'] = torch.cat([end_points[f'{ppx}heading_residuals']
                                                                       for ppx in _prefixes], 1)
-                end_points[f'{prefix}size_scores'] = torch.cat([end_points[f'{ppx}size_scores']
-                                                                for ppx in _prefixes], 1)
-                end_points[f'{prefix}size_residuals'] = torch.cat([end_points[f'{ppx}size_residuals']
-                                                                   for ppx in _prefixes], 1)
+                if args.size_cls_agnostic:
+                    end_points[f'{prefix}pred_size'] = torch.cat([end_points[f'{ppx}pred_size']
+                                                                  for ppx in _prefixes], 1)
+                else:
+                    end_points[f'{prefix}size_scores'] = torch.cat([end_points[f'{ppx}size_scores']
+                                                                    for ppx in _prefixes], 1)
+                    end_points[f'{prefix}size_residuals'] = torch.cat([end_points[f'{ppx}size_residuals']
+                                                                       for ppx in _prefixes], 1)
                 end_points[f'{prefix}sem_cls_scores'] = torch.cat([end_points[f'{ppx}sem_cls_scores']
                                                                    for ppx in _prefixes], 1)
                 end_points[f'{prefix}objectness_scores'] = torch.cat([end_points[f'{ppx}objectness_scores']
                                                                       for ppx in _prefixes], 1)
 
-            batch_pred_map_cls = parse_predictions(end_points, CONFIG_DICT, prefix)
-            batch_gt_map_cls = parse_groundtruths(end_points, CONFIG_DICT)
+            batch_pred_map_cls = parse_predictions(end_points, CONFIG_DICT, prefix,
+                                                   size_cls_agnostic=args.size_cls_agnostic)
+            batch_gt_map_cls = parse_groundtruths(end_points, CONFIG_DICT,
+                                                  size_cls_agnostic=args.size_cls_agnostic)
             batch_pred_map_cls_dict[prefix].append(batch_pred_map_cls)
             batch_gt_map_cls_dict[prefix].append(batch_gt_map_cls)
 
