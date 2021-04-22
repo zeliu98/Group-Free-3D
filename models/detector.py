@@ -9,7 +9,8 @@ sys.path.append(BASE_DIR)
 
 from .backbone_module import Pointnet2Backbone
 from .transformer import TransformerDecoderLayer
-from .modules import PointsObjClsModule, FPSModule, GeneralSamplingModule, PositionEmbeddingLearned, PredictHead
+from .modules import PointsObjClsModule, FPSModule, GeneralSamplingModule, PositionEmbeddingLearned, PredictHead, \
+    ClsAgnosticPredictHead
 
 
 class GroupFreeDetector(nn.Module):
@@ -36,8 +37,8 @@ class GroupFreeDetector(nn.Module):
     def __init__(self, num_class, num_heading_bin, num_size_cluster, mean_size_arr,
                  input_feature_dim=0, width=1, bn_momentum=0.1, sync_bn=False, num_proposal=128, sampling='kps',
                  dropout=0.1, activation="relu", nhead=8, num_decoder_layers=6, dim_feedforward=2048,
-                 self_position_embedding='xyz_learned', cross_position_embedding='xyz_learned'
-                 ):
+                 self_position_embedding='xyz_learned', cross_position_embedding='xyz_learned',
+                 size_cls_agnostic=False):
         super().__init__()
 
         self.num_class = num_class
@@ -56,6 +57,7 @@ class GroupFreeDetector(nn.Module):
         self.dim_feedforward = dim_feedforward
         self.self_position_embedding = self_position_embedding
         self.cross_position_embedding = cross_position_embedding
+        self.size_cls_agnostic = size_cls_agnostic
 
         # Backbone point feature learning
         self.backbone_net = Pointnet2Backbone(input_feature_dim=self.input_feature_dim, width=self.width)
@@ -68,8 +70,11 @@ class GroupFreeDetector(nn.Module):
         else:
             raise NotImplementedError
         # Proposal
-        self.proposal_head = PredictHead(num_class, num_heading_bin, num_size_cluster,
-                                         mean_size_arr, num_proposal, 288)
+        if self.size_cls_agnostic:
+            self.proposal_head = ClsAgnosticPredictHead(num_class, num_heading_bin, num_proposal, 288)
+        else:
+            self.proposal_head = PredictHead(num_class, num_heading_bin, num_size_cluster,
+                                             mean_size_arr, num_proposal, 288)
         if self.num_decoder_layers <= 0:
             # stop building if has no decoder layer
             return
@@ -115,8 +120,11 @@ class GroupFreeDetector(nn.Module):
         # Prediction Head
         self.prediction_heads = nn.ModuleList()
         for i in range(self.num_decoder_layers):
-            self.prediction_heads.append(PredictHead(num_class, num_heading_bin, num_size_cluster,
-                                                     mean_size_arr, num_proposal, 288))
+            if self.size_cls_agnostic:
+                self.prediction_heads.append(ClsAgnosticPredictHead(num_class, num_heading_bin, num_proposal, 288))
+            else:
+                self.prediction_heads.append(PredictHead(num_class, num_heading_bin, num_size_cluster,
+                                                         mean_size_arr, num_proposal, 288))
 
         # Init
         self.init_weights()

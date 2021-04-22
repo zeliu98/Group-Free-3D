@@ -50,6 +50,7 @@ def parse_option():
     parser.add_argument('--heading_loss_type', default='smoothl1', type=str, help='(smoothl1, l1)')
     parser.add_argument('--heading_delta', default=1.0, type=float, help='delta for smoothl1 loss in heading loss')
     parser.add_argument('--query_points_obj_topk', default=4, type=int, help='query_points_obj_topk')
+    parser.add_argument('--size_cls_agnostic', action='store_true', help='Use class-agnostic size prediction.')
 
     # Data
     parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 8]')
@@ -233,7 +234,8 @@ def get_model(args, DATASET_CONFIG):
                               num_decoder_layers=args.num_decoder_layers,
                               dim_feedforward=args.dim_feedforward,
                               self_position_embedding=args.self_position_embedding,
-                              cross_position_embedding=args.cross_position_embedding)
+                              cross_position_embedding=args.cross_position_embedding,
+                              size_cls_agnostic=True if args.size_cls_agnostic else False)
 
     criterion = get_loss
     return model, criterion
@@ -331,7 +333,7 @@ def train_one_epoch(epoch, train_loader, DATASET_CONFIG, model, criterion, optim
                                      size_delta=config.size_delta,
                                      heading_loss_type=config.heading_loss_type,
                                      heading_delta=config.heading_delta,
-                                     )
+                                     size_cls_agnostic=config.size_cls_agnostic)
 
         optimizer.zero_grad()
         loss.backward()
@@ -411,7 +413,7 @@ def evaluate_one_epoch(test_loader, DATASET_CONFIG, CONFIG_DICT, AP_IOU_THRESHOL
                                      size_delta=config.size_delta,
                                      heading_loss_type=config.heading_loss_type,
                                      heading_delta=config.heading_delta,
-                                     )
+                                     size_cls_agnostic=config.size_cls_agnostic)
 
         # Accumulate statistics and print out
         for key in end_points:
@@ -423,8 +425,10 @@ def evaluate_one_epoch(test_loader, DATASET_CONFIG, CONFIG_DICT, AP_IOU_THRESHOL
                     stat_dict[key] += end_points[key].item()
 
         for prefix in prefixes:
-            batch_pred_map_cls = parse_predictions(end_points, CONFIG_DICT, prefix)
-            batch_gt_map_cls = parse_groundtruths(end_points, CONFIG_DICT)
+            batch_pred_map_cls = parse_predictions(end_points, CONFIG_DICT, prefix,
+                                                   size_cls_agnostic=config.size_cls_agnostic)
+            batch_gt_map_cls = parse_groundtruths(end_points, CONFIG_DICT,
+                                                  size_cls_agnostic=config.size_cls_agnostic)
             batch_pred_map_cls_dict[prefix].append(batch_pred_map_cls)
             batch_gt_map_cls_dict[prefix].append(batch_gt_map_cls)
 

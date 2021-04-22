@@ -137,7 +137,8 @@ def compute_objectness_loss_based_on_query_points(end_points, num_decoder_layers
 def compute_box_and_sem_cls_loss(end_points, config, num_decoder_layers,
                                  center_loss_type='smoothl1', center_delta=1.0,
                                  size_loss_type='smoothl1', size_delta=1.0,
-                                 heading_loss_type='smoothl1', heading_delta=1.0):
+                                 heading_loss_type='smoothl1', heading_delta=1.0,
+                                 size_cls_agnostic=False):
     """ Compute 3D bounding box and semantic classification loss.
     """
 
@@ -208,43 +209,63 @@ def compute_box_and_sem_cls_loss(end_points, config, num_decoder_layers,
             raise NotImplementedError
 
         # Compute size loss
-        size_class_label = torch.gather(end_points['size_class_label'], 1,
-                                        object_assignment)  # select (B,K) from (B,K2)
-        criterion_size_class = nn.CrossEntropyLoss(reduction='none')
-        size_class_loss = criterion_size_class(end_points[f'{prefix}size_scores'].transpose(2, 1),
-                                               size_class_label)  # (B,K)
-        size_class_loss = torch.sum(size_class_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
-
-        size_residual_label = torch.gather(
-            end_points['size_residual_label'], 1,
-            object_assignment.unsqueeze(-1).repeat(1, 1, 3))  # select (B,K,3) from (B,K2,3)
-
-        size_label_one_hot = torch.cuda.FloatTensor(batch_size, size_class_label.shape[1], num_size_cluster).zero_()
-        size_label_one_hot.scatter_(2, size_class_label.unsqueeze(-1),
-                                    1)  # src==1 so it's *one-hot* (B,K,num_size_cluster)
-        size_label_one_hot_tiled = size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3)  # (B,K,num_size_cluster,3)
-        predicted_size_residual_normalized = torch.sum(
-            end_points[f'{prefix}size_residuals_normalized'] * size_label_one_hot_tiled,
-            2)  # (B,K,3)
-
-        mean_size_arr_expanded = torch.from_numpy(mean_size_arr.astype(np.float32)).cuda().unsqueeze(0).unsqueeze(
-            0)  # (1,1,num_size_cluster,3)
-        mean_size_label = torch.sum(size_label_one_hot_tiled * mean_size_arr_expanded, 2)  # (B,K,3)
-        size_residual_label_normalized = size_residual_label / mean_size_label  # (B,K,3)
-
-        size_residual_normalized_error = predicted_size_residual_normalized - size_residual_label_normalized
-
-        if size_loss_type == 'smoothl1':
-            size_residual_normalized_loss = size_delta * smoothl1_loss(size_residual_normalized_error,
-                                                                       delta=size_delta)  # (B,K,3) -> (B,K)
-            size_residual_normalized_loss = torch.sum(size_residual_normalized_loss * objectness_label.unsqueeze(2)) / (
-                    torch.sum(objectness_label) + 1e-6)
-        elif size_loss_type == 'l1':
-            size_residual_normalized_loss = l1_loss(size_residual_normalized_error)  # (B,K,3) -> (B,K)
-            size_residual_normalized_loss = torch.sum(size_residual_normalized_loss * objectness_label.unsqueeze(2)) / (
-                    torch.sum(objectness_label) + 1e-6)
+        if size_cls_agnostic:
+            pred_size = end_points[f'{prefix}pred_size']
+            size_label = torch.gather(
+                end_points['size_gts'], 1,
+                object_assignment.unsqueeze(-1).repeat(1, 1, 3))  # select (B,K,3) from (B,K2,3)
+            size_error = pred_size - size_label
+            if size_loss_type == 'smoothl1':
+                size_loss = size_delta * smoothl1_loss(size_error,
+                                                       delta=size_delta)  # (B,K,3) -> (B,K)
+                size_loss = torch.sum(size_loss * objectness_label.unsqueeze(2)) / (
+                        torch.sum(objectness_label) + 1e-6)
+            elif size_loss_type == 'l1':
+                size_loss = l1_loss(size_error)  # (B,K,3) -> (B,K)
+                size_loss = torch.sum(size_loss * objectness_label.unsqueeze(2)) / (
+                        torch.sum(objectness_label) + 1e-6)
+            else:
+                raise NotImplementedError
         else:
-            raise NotImplementedError
+            size_class_label = torch.gather(end_points['size_class_label'], 1,
+                                            object_assignment)  # select (B,K) from (B,K2)
+            criterion_size_class = nn.CrossEntropyLoss(reduction='none')
+            size_class_loss = criterion_size_class(end_points[f'{prefix}size_scores'].transpose(2, 1),
+                                                   size_class_label)  # (B,K)
+            size_class_loss = torch.sum(size_class_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
+
+            size_residual_label = torch.gather(
+                end_points['size_residual_label'], 1,
+                object_assignment.unsqueeze(-1).repeat(1, 1, 3))  # select (B,K,3) from (B,K2,3)
+
+            size_label_one_hot = torch.cuda.FloatTensor(batch_size, size_class_label.shape[1], num_size_cluster).zero_()
+            size_label_one_hot.scatter_(2, size_class_label.unsqueeze(-1),
+                                        1)  # src==1 so it's *one-hot* (B,K,num_size_cluster)
+            size_label_one_hot_tiled = size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3)  # (B,K,num_size_cluster,3)
+            predicted_size_residual_normalized = torch.sum(
+                end_points[f'{prefix}size_residuals_normalized'] * size_label_one_hot_tiled,
+                2)  # (B,K,3)
+
+            mean_size_arr_expanded = torch.from_numpy(mean_size_arr.astype(np.float32)).cuda().unsqueeze(0).unsqueeze(
+                0)  # (1,1,num_size_cluster,3)
+            mean_size_label = torch.sum(size_label_one_hot_tiled * mean_size_arr_expanded, 2)  # (B,K,3)
+            size_residual_label_normalized = size_residual_label / mean_size_label  # (B,K,3)
+
+            size_residual_normalized_error = predicted_size_residual_normalized - size_residual_label_normalized
+
+            if size_loss_type == 'smoothl1':
+                size_residual_normalized_loss = size_delta * smoothl1_loss(size_residual_normalized_error,
+                                                                           delta=size_delta)  # (B,K,3) -> (B,K)
+                size_residual_normalized_loss = torch.sum(
+                    size_residual_normalized_loss * objectness_label.unsqueeze(2)) / (
+                                                        torch.sum(objectness_label) + 1e-6)
+            elif size_loss_type == 'l1':
+                size_residual_normalized_loss = l1_loss(size_residual_normalized_error)  # (B,K,3) -> (B,K)
+                size_residual_normalized_loss = torch.sum(
+                    size_residual_normalized_loss * objectness_label.unsqueeze(2)) / (
+                                                        torch.sum(objectness_label) + 1e-6)
+            else:
+                raise NotImplementedError
 
         # 3.4 Semantic cls loss
         sem_cls_label = torch.gather(end_points['sem_cls_label'], 1, object_assignment)  # select (B,K) from (B,K2)
@@ -255,9 +276,13 @@ def compute_box_and_sem_cls_loss(end_points, config, num_decoder_layers,
         end_points[f'{prefix}center_loss'] = center_loss
         end_points[f'{prefix}heading_cls_loss'] = heading_class_loss
         end_points[f'{prefix}heading_reg_loss'] = heading_residual_normalized_loss
-        end_points[f'{prefix}size_cls_loss'] = size_class_loss
-        end_points[f'{prefix}size_reg_loss'] = size_residual_normalized_loss
-        box_loss = center_loss + 0.1 * heading_class_loss + heading_residual_normalized_loss + 0.1 * size_class_loss + size_residual_normalized_loss
+        if size_cls_agnostic:
+            end_points[f'{prefix}size_reg_loss'] = size_loss
+            box_loss = center_loss + 0.1 * heading_class_loss + heading_residual_normalized_loss + size_loss
+        else:
+            end_points[f'{prefix}size_cls_loss'] = size_class_loss
+            end_points[f'{prefix}size_reg_loss'] = size_residual_normalized_loss
+            box_loss = center_loss + 0.1 * heading_class_loss + heading_residual_normalized_loss + 0.1 * size_class_loss + size_residual_normalized_loss
         end_points[f'{prefix}box_loss'] = box_loss
         end_points[f'{prefix}sem_cls_loss'] = sem_cls_loss
 
@@ -271,7 +296,8 @@ def get_loss(end_points, config, num_decoder_layers,
              query_points_obj_topk=5,
              center_loss_type='smoothl1', center_delta=1.0,
              size_loss_type='smoothl1', size_delta=1.0,
-             heading_loss_type='smoothl1', heading_delta=1.0):
+             heading_loss_type='smoothl1', heading_delta=1.0,
+             size_cls_agnostic=False):
     """ Loss functions
     """
     if 'seeds_obj_cls_logits' in end_points.keys():
@@ -292,7 +318,8 @@ def get_loss(end_points, config, num_decoder_layers,
         end_points, config, num_decoder_layers,
         center_loss_type, center_delta=center_delta,
         size_loss_type=size_loss_type, size_delta=size_delta,
-        heading_loss_type=heading_loss_type, heading_delta=heading_delta)
+        heading_loss_type=heading_loss_type, heading_delta=heading_delta,
+        size_cls_agnostic=size_cls_agnostic)
     end_points['sum_heads_box_loss'] = box_loss_sum
     end_points['sum_heads_sem_cls_loss'] = sem_cls_loss_sum
 
