@@ -54,7 +54,7 @@ scripts on ScanNet and SUN RGB-D.
 | Ours(L6, O256) | PointNet++ | 67.3 (66.2*) | 48.9 (48.4*) |[model](https://drive.google.com/file/d/1aS3vsHtg1QU0yFGPa_-kdBmfGR7VTvY0/view?usp=sharing)|
 | Ours(L12, O256) | PointNet++ | 67.2 (66.6*) | 49.7 (49.3*) |[model](https://drive.google.com/file/d/1IMaSW3GbXSKdDRnO_r60AiJaDEKkqAv8/view?usp=sharing)|
 | Ours(L12, O256) | PointNet++w2× |68.8 (68.3*) | 52.1 (51.1*) |[model](https://drive.google.com/file/d/1V6sFLFcqsp7YJ3-9AV2NqUhEGVkuNGWT/view?usp=sharing)|
-| Ours(L12, O512) | PointNet++w2× | 69.1 (68.8*) |52.8 (52.3*) |[model](https://drive.google.com/file/d/16NAEZqxPdBkxW7GGKGHe4-nDtfqL1htE/view?usp=sharing)|
+| Ours(L12, O512) | PointNet++w2× | **69.1 (68.8\*)** |**52.8 (52.3\*)** |[model](https://drive.google.com/file/d/16NAEZqxPdBkxW7GGKGHe4-nDtfqL1htE/view?usp=sharing)|
 
 ### SUN RGB-D
 
@@ -65,7 +65,7 @@ scripts on ScanNet and SUN RGB-D.
 |[HGNet](https://openaccess.thecvf.com/content_CVPR_2020/papers/Chen_A_Hierarchical_Graph_Network_for_3D_Object_Detection_on_Point_CVPR_2020_paper.pdf)| GU-net |point | 61.6 |-|-|
 |[H3DNet](https://arxiv.org/abs/2006.05682) | 4xPointNet++ |point | 60.1 | 39.0 | [official repo](https://github.com/zaiweizhang/H3DNet) |
 |[imVoteNet](https://arxiv.org/abs/2001.10692)|PointNet++|point+RGB| 63.4 | - |  [official repo](https://github.com/facebookresearch/imvotenet)|
-| Ours(L6, O256)| PointNet++ | point | 63.0 (62.6*) | 45.2 (44.4*) |[model](https://drive.google.com/file/d/16p4Ir2o16qfn5W1YPayxfDKrU_N_Hm9H/view?usp=sharing) |
+| Ours(L6, O256)| PointNet++ | point | **63.0 (62.6\*)** | **45.2 (44.4\*)** |[model](https://drive.google.com/file/d/16p4Ir2o16qfn5W1YPayxfDKrU_N_Hm9H/view?usp=sharing) |
 
 **Notes:**
 
