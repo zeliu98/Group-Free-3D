@@ -1,4 +1,6 @@
 # Group-Free 3D Object Detection via Transformers
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/group-free-3d-object-detection-via/3d-object-detection-on-scannetv2)](https://paperswithcode.com/sota/3d-object-detection-on-scannetv2?p=group-free-3d-object-detection-via)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/group-free-3d-object-detection-via/3d-object-detection-on-sun-rgbd-val)](https://paperswithcode.com/sota/3d-object-detection-on-sun-rgbd-val?p=group-free-3d-object-detection-via)
 
 By [Ze Liu](https://github.com/zeliu98), [Zheng Zhang](https://github.com/stupidZZ), [Yue Cao](https://github.com/caoyue10), [Han Hu](https://github.com/ancientmooner), [Xin Tong](http://www.xtong.info/).
 
