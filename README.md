@@ -72,6 +72,7 @@ scripts on ScanNet and SUN RGB-D.
 **Notes:**
 
 - `*` means the result is averaged over 5-times evaluation since the algorithm randomness is large.
+-  We use 4 GPUs for training by default. 
 
 ## Install
 
