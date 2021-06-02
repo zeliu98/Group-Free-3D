@@ -53,7 +53,7 @@ def parse_option():
     parser.add_argument('--size_cls_agnostic', action='store_true', help='Use class-agnostic size prediction.')
 
     # Data
-    parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 8]')
+    parser.add_argument('--batch_size', type=int, default=8, help='Batch Size per GPU during training [default: 8]')
     parser.add_argument('--dataset', default='scannet', help='Dataset name. sunrgbd or scannet. [default: scannet]')
     parser.add_argument('--num_point', type=int, default=50000, help='Point Number [default: 50000]')
     parser.add_argument('--data_root', default='data', help='data root path')
